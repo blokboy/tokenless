@@ -14,14 +14,12 @@ contract MimoResolver {
     bytes4 constant NAME_INTERFACE_ID = 0x691f3431;
     bytes4 constant TEXT_INTERFACE_ID = 0x59d1d43c;
     bytes4 constant MULTIHASH_INTERFACE_ID = 0xe89401a1;
-    bytes4 constant MIMO_INTERFACE_ID = 0x00042d1b; // bytes4(keccak256('mimo(bytes32)'))
 
     event AddrChanged(bytes32 indexed node, address a);
     event ContentChanged(bytes32 indexed node, bytes32 hash);
     event NameChanged(bytes32 indexed node, string name);
     event TextChanged(bytes32 indexed node, string indexedKey, string key);
     event MultihashChanged(bytes32 indexed node, bytes hash);
-    event IDChanged(bytes32 indexed node, uint256 id);
 
     struct Record {
         address addr;
@@ -29,7 +27,6 @@ contract MimoResolver {
         string name;
         mapping(string => string) text;
         bytes multihash;
-        uint256 mimo;
     }
 
     ENS ens;
@@ -108,18 +105,6 @@ contract MimoResolver {
     }
 
     /**
-     * Sets the text data associated with an ENS node and key.
-     * May only be called by the owner of that node in the ENS registry.
-     * @param node The node to update.
-     * @param key The key to set.
-     * @param value The text data value to set.
-     */
-    function setMimoId(bytes32 node, uint256 id) public only_owner(node) {
-        records[node].mimo = id;
-        IDChanged(node, id);
-    }
-
-    /**
      * Returns the text data associated with an ENS node and key.
      * @param node The ENS node to query.
      * @param key The text data key to query.
@@ -169,15 +154,6 @@ contract MimoResolver {
     }
 
     /**
-     * Returns the Mimo ID associated with an ENS node.
-     * @param node The ENS node to query.
-     * @return The associated Mimo ID.
-     */
-    function mimo(bytes32 node) public view returns (uint256) {
-        return records[node].mimo;
-    }
-
-    /**
      * Returns true if the resolver implements the interface specified by the provided hash.
      * @param interfaceID The ID of the interface to check for.
      * @return True if the contract implements the requested interface.
@@ -187,7 +163,6 @@ contract MimoResolver {
         interfaceID == CONTENT_INTERFACE_ID ||
         interfaceID == NAME_INTERFACE_ID ||
         interfaceID == TEXT_INTERFACE_ID ||
-        interfaceID == MIMO_INTERFACE_ID ||
         interfaceID == MULTIHASH_INTERFACE_ID ||
         interfaceID == INTERFACE_META_ID;
     }

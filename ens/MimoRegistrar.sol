@@ -35,12 +35,8 @@ contract MimoRegistrar is Ownable {
      * @param subnode The hash of the label to register.
      * @param owner The address of the new owner.
      */
-    function register(bytes32 _subnode, address _owner, string _name, uint256 _id) public only_owner(_subnode) {
+    function register(bytes32 _subnode, address _owner) public only_owner(_subnode) {
         ens.setSubnodeOwner(rootNode, _subnode, _owner);
-        bytes32 domain = getDomain(_subnode);
-        resolver.setAddr(domain, _owner);
-        resolver.setName(domain, _name);
-        resolver.setMimoId(domain, _id);
     }
 
     function giveBackOwnership() public onlyOwner {
@@ -49,6 +45,10 @@ contract MimoRegistrar is Ownable {
 
     function subnodeOwner(bytes32 subnode) public view returns (address) {
         return ens.owner(keccak256(rootNode, subnode));
+    }
+
+    function nodeOwner(bytes32 _node) public view returns (address) {
+        return ens.owner(_node);
     }
 
     function getDomain(bytes32 _subnode) public pure returns (bytes32) {

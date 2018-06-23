@@ -2,26 +2,26 @@ pragma solidity ^0.4.19;
 
 
 contract MimoStorage is Ownable {
-  
-    event Follow(uint256 indexed _followingId, uint256 indexed _followedId, bool indexed _response);
 
-    // ties Mimo IDs to ENS subdomains
-    mapping (uint256 => bytes32) public profiles;
+    event Follow(bytes32 indexed _following, bytes32 indexed _followed, bool indexed _response);
 
-    function follow(uint256 _followingId, uint256 _followedId) public onlyOwner {
-        emit Follow(_followingId, _followedId, true);
+    // ties Mimo handles to ENS subdomains
+    mapping (string => bytes32) internal profiles;
+
+    function follow(bytes32 _following, bytes32 _followed) public {
+        emit Follow(_following, _followed, true);
     }
 
-    function unfollow(uint256 _followingId, uint256 _followedId) public onlyOwner {
-        emit Follow(_followingId, _followedId, false);
+    function unfollow(bytes32 _unfollowing, bytes32 _unfollowed) public {
+        emit Follow(_unfollowing, _unfollowed, false);
     }
 
-    function setNode(uint256 _id, bytes _node) public onlyOwner {
-        profiles[_id] = _node;
+    function setNode(string _handle, bytes32 _node) public {
+        profiles[_handle] = _node;
     }
 
-    function getNode(uint256 _id) public view returns (bytes32) {
-        return profiles[_id];
+    function getNode(string _handle) public view returns (bytes32) {
+        return profiles[_handle];
     }
 
 }
