@@ -12,11 +12,8 @@ contract Mimo is Ownable {
     // Price of a Mimo profile
     uint256 public price;
 
-    // Tracks whether a profile is in use or not
-    mapping (bytes32 => bool) public active;
-
     modifier onlyActive(bytes32 _node) {
-        require(active[_node] == true);
+        require(active(_node) == true);
         _;
     }
 
@@ -43,7 +40,7 @@ contract Mimo is Ownable {
         require(active[profileNode(_handle)] == false);
         require(profileOwner(_handle) == address(0));
         registrar.register(keccak256(_handle), msg.sender);
-        active[profileNode(_handle)] = true;
+        setProfileInfo(profileNode(_handle), "mimo:active", keccak256("true"));
         emit Profile(_handle, profileNode(_handle), block.timestamp);
     }
 
@@ -57,11 +54,11 @@ contract Mimo is Ownable {
     }
 
     function deactivateProfile(bytes32 _node) public onlyAuthorized(_node) onlyActive(_node) {
-        active[_node] = false;
+        setProfileInfo(_node, "mimo:active", keccak256("false"));
     }
 
     function reactivateProfile(bytes32 _node) public onlyAuthorized(_node) {
-        active[_node] = true;
+        setProfileInfo(_node, "mimo:active", keccak256("true"));
     }
 
     function setProfileAddress(bytes32 _node, address _addr) public onlyAuthorized(_node) onlyActive(_node) {
@@ -86,6 +83,10 @@ contract Mimo is Ownable {
 
     function unfollowProfile(bytes32 _initiator, bytes32 _target) public onlyAuthorized(_initiator) onlyActive(_initiator) onlyActive(_target) {
         emit Follow(_initiator, _target, false);
+    }
+
+    function active(bytes32 _node) public view returns(bool) {
+        return resolver.text(_node, "mimo:active") == keccak256("true");
     }
 
     function profileAddress(bytes32 _node) public view onlyActive(_node) returns(address) {
