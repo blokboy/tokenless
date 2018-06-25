@@ -51,7 +51,7 @@ contract MimoRegistrar is Ownable {
         return ens.owner(_node);
     }
 
-    function getDomain(bytes32 _subnode) public pure returns (bytes32) {
+    function getNode(bytes32 _subnode) public pure returns (bytes32) {
         return keccak256(rootNode, _subnode);
     }
 }

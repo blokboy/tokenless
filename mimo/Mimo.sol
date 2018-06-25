@@ -1,7 +1,7 @@
 pragma solidity ^0.4.24;
 
 
-contract Mimo is Ownable {
+contract Mimo {
 
     // The Mimo Registrar interface
     RegistrarInterface public registrar;
@@ -9,14 +9,14 @@ contract Mimo is Ownable {
     // The Mimo Resolver interface
     ResolverInterface public resolver;
 
-    // The Mimo Storage interface
-    StorageInterface public store;
-
-    // price of a profile
+    // Price of a Mimo profile
     uint256 public price;
 
+    // Tracks whether a profile is in use or not
+    mapping (bytes32 => bool) public active;
+
     modifier mustExist(bytes32 _node) {
-        require(registrar.nodeOwner(_node) != address(0));
+        require(active[_node] == true);
         _;
     }
 
@@ -25,50 +25,65 @@ contract Mimo is Ownable {
         _;
     }
 
-    function Mimo(RegistrarInterface _registrar, ResolverInterface _resolver, StorageInterface _store, uint256 _price) public {
+    // Tracks who follows who, latest instance of an event with filters for
+    // _following and _followed will return a _response
+    // This will tell us if a profile follows another or not
+    event Follow(bytes32 indexed _following, bytes32 indexed _followed, bool indexed _response);
+
+    function Mimo(RegistrarInterface _registrar, ResolverInterface _resolver, uint256 _price) public {
         registrar = _registrar;
         resolver = _resolver;
-        store = _store;
         price = _price;
     }
 
     function createProfile(string _handle) public payable {
         require(msg.value >= price);
         registrar.register(keccak256(_handle), msg.sender);
-        bytes32 domain = registrar.getDomain(keccak256(_handle));
-        resolver.setAddr(domain, msg.sender);
-        resolver.setName(domain, _name);
-        store.setNode(_handle, domain);
-        id++;
+        active[profileNode(_handle)] = true;
     }
 
-    // Can be used to add any attribute to a Mimo profile
-    // Here are some standards to adhere to however:
-    // _key = 'userql' refers to a graphql endpoint that returns all the info on a Mimo profile
-    // _key = 'followerql' refers to a graphql endpoint that returns all the info on a profile's followers
-    function addAttribute(bytes32 _node, string _key, string _value) public {
+    function setProfileOwner(string _handle, address _owner) public {
+        require(profileOwner(_handle) != address(0));
+        require(_owner != address(0));
+        require(_owner != profileOwner(_handle));
+        registrar.register(keccak256(_handle), _owner);
+    }
+
+    function deactivateProfile(bytes32 _node) public onlyAuthorized(_node) mustExist(_node) {
+        active[_node] = false;
+    }
+
+    function reactivateProfile(bytes32 _node) public onlyAuthorized(_node) {
+        active[_node] = true;
+    }
+
+    function setProfileAddress(bytes32 _node, address _addr) public onlyAuthorized(_node) mustExist(_node) {
+        resolver.setAddr(_node, _addr);
+    }
+
+    function setInfo(bytes32 _node, string _key, string _value) public onlyAuthorized(_node) mustExist(_node) {
         resolver.setText(_node, _key, _value);
     }
 
     function followProfile(bytes32 _initiator, bytes32 _target) public onlyAuthorized(_initiator) mustExist(_initiator) mustExist(_target) {
-        store.follow(_initiator, _target);
+        emit Follow(_initiator, _target, true);
     }
 
     function unfollowProfile(bytes32 _initiator, bytes32 _target) public onlyAuthorized(_initiator) mustExist(_initiator) mustExist(_target) {
-        store.unfollow(_initiator, _target);
+        emit Follow(_initiator, _target, false);
     }
 
-    function giveBackOwnership() public onlyOwner {
-        store.transferOwnership(owner);
+    function profileAddress(bytes32 _node) public view mustExist(_node) returns(address) {
+        return resolver.addr(_node);
     }
 
-    function changePrice(uint256 _newPrice) public onlyOwner {
-        price = _newPrice;
+    function profileOwner(string _handle) public view returns(address) {
+        require(active[profileNode(_handle)] == true);
+        return registrar.subnodeOwner(keccak256(_handle));
     }
 
-    // Withdraw the funds of the account from fees received by charging for profiles
-    function withdraw() public onlyOwner {
-        owner.transfer(address(this).balance);
+    function profileNode(string _handle) public pure returns(bytes32) {
+        return registrar.getNode(keccak256(_handle));
     }
 
 }
