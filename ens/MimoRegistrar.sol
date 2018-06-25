@@ -6,7 +6,7 @@ import "./ENS.sol";
  * A registrar that allocates subdomains to the first person to claim them.
  */
 
-contract MimoRegistrar is Ownable {
+contract MimoRegistrar {
     ENS public ens;
     bytes32 public rootNode;
 
@@ -15,7 +15,7 @@ contract MimoRegistrar is Ownable {
 
     modifier only_owner(bytes32 subnode) {
         address currentOwner = ens.owner(keccak256(rootNode, subnode));
-        require(currentOwner == 0 || currentOwner == msg.sender);
+        require(currentOwner == 0 || currentOwner == _owner);
         _;
     }
 
@@ -35,7 +35,7 @@ contract MimoRegistrar is Ownable {
      * @param subnode The hash of the label to register.
      * @param owner The address of the new owner.
      */
-    function register(bytes32 _subnode, address _owner) public only_owner(_subnode) {
+    function register(bytes32 _subnode, address _owner) public onlyOwner {
         ens.setSubnodeOwner(rootNode, _subnode, _owner);
     }
 

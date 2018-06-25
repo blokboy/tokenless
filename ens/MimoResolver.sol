@@ -6,7 +6,7 @@ import "./ENS.sol";
  * A simple resolver anyone can use; only allows the owner of a node to set its
  * address.
  */
-contract MimoResolver {
+contract MimoResolver is Ownable {
 
     bytes4 constant INTERFACE_META_ID = 0x01ffc9a7;
     bytes4 constant ADDR_INTERFACE_ID = 0x3b3b57de;
@@ -52,7 +52,7 @@ contract MimoResolver {
      * @param node The node to update.
      * @param addr The address to set.
      */
-    function setAddr(bytes32 node, address addr) public only_owner(node) {
+    function setAddr(bytes32 node, address addr) public onlyOwner {
         records[node].addr = addr;
         AddrChanged(node, addr);
     }
@@ -65,7 +65,7 @@ contract MimoResolver {
      * @param node The node to update.
      * @param hash The content hash to set
      */
-    function setContent(bytes32 node, bytes32 hash) public only_owner(node) {
+    function setContent(bytes32 node, bytes32 hash) public onlyOwner {
         records[node].content = hash;
         ContentChanged(node, hash);
     }
@@ -76,7 +76,7 @@ contract MimoResolver {
      * @param node The node to update.
      * @param hash The multihash to set
      */
-    function setMultihash(bytes32 node, bytes hash) public only_owner(node) {
+    function setMultihash(bytes32 node, bytes hash) public onlyOwner {
         records[node].multihash = hash;
         MultihashChanged(node, hash);
     }
@@ -99,7 +99,7 @@ contract MimoResolver {
      * @param key The key to set.
      * @param value The text data value to set.
      */
-    function setText(bytes32 node, string key, string value) public only_owner(node) {
+    function setText(bytes32 node, string key, string value) public onlyOwner {
         records[node].text[key] = value;
         TextChanged(node, key, key);
     }
