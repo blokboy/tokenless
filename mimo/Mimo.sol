@@ -77,11 +77,11 @@ contract Mimo is Ownable {
         resolver.setMultihash(_node, _hash);
     }
 
-    function followProfile(bytes32 _initiator, bytes32 _target) public onlyAuthorized(_initiator) onlyActive(_initiator) onlyActive(_target) {
+    function follow(bytes32 _initiator, bytes32 _target) public onlyAuthorized(_initiator) onlyActive(_initiator) onlyActive(_target) {
         emit Follow(_initiator, _target, true);
     }
 
-    function unfollowProfile(bytes32 _initiator, bytes32 _target) public onlyAuthorized(_initiator) onlyActive(_initiator) onlyActive(_target) {
+    function unfollow(bytes32 _initiator, bytes32 _target) public onlyAuthorized(_initiator) onlyActive(_initiator) onlyActive(_target) {
         emit Follow(_initiator, _target, false);
     }
 

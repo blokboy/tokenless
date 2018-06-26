@@ -2,7 +2,7 @@ pragma solidity ^0.4.24;
 
 
 interface MimoInterface {
-  
+
     function createProfile(string _handle) public payable;
     function setProfileOwner(string _handle, address _owner) public;
     function deactivateProfile(bytes32 _node) public onlyAuthorized(_node) onlyActive(_node);
@@ -11,8 +11,8 @@ interface MimoInterface {
     function setProfileInfo(bytes32 _node, string _key, string _value) public onlyAuthorized(_node) onlyActive(_node);
     function setProfileContent(bytes32 _node, bytes32 _content) public onlyAuthorized(_node) onlyActive(_node);
     function setProfileMultihash(bytes32 _node, bytes _hash) public onlyAuthorized(_node) onlyActive(_node);
-    function followProfile(bytes32 _initiator, bytes32 _target) public onlyAuthorized(_initiator) onlyActive(_initiator) onlyActive(_target);
-    function unfollowProfile(bytes32 _initiator, bytes32 _target) public onlyAuthorized(_initiator) onlyActive(_initiator) onlyActive(_target);
+    function follow(bytes32 _initiator, bytes32 _target) public onlyAuthorized(_initiator) onlyActive(_initiator) onlyActive(_target);
+    function unfollow(bytes32 _initiator, bytes32 _target) public onlyAuthorized(_initiator) onlyActive(_initiator) onlyActive(_target);
     function registrar() public view returns(address);
     function resolver() public view returns(address);
     function price() public view returns(uint256);
