@@ -9,48 +9,36 @@ contract Mimo is Ownable {
     // The Mimo Resolver interface
     ResolverInterface public resolver;
 
-    // Price of a Mimo profile
-    uint256 public price;
-
     modifier onlyActive(bytes32 _node) {
         require(active(_node) == true);
         _;
     }
 
     modifier onlyAuthorized(bytes32 _node) {
-        require(msg.sender == registrar.nodeOwner(_node));
+        require(msg.sender == profileOwner(_node));
         _;
     }
 
-    event Profile(string indexed _handle, bytes32 indexed _node, uint256 indexed _timestamp);
+    event Profile(bytes32 indexed _node, uint256 indexed _timestamp);
 
-    // Tracks who follows who, latest instance of an event with filters for
-    // _following and _followed will return a _response
-    // This will tell us if a profile follows another or not
-    event Follow(bytes32 indexed _following, bytes32 indexed _followed, bool indexed _response);
-
-    function Mimo(RegistrarInterface _registrar, ResolverInterface _resolver, uint256 _price) public {
+    function Mimo(RegistrarInterface _registrar, ResolverInterface _resolver) public {
         registrar = _registrar;
         resolver = _resolver;
-        price = _price;
     }
 
-    function createProfile(string _handle) public payable {
+    function createProfile(bytes32 _subnode) public payable {
         require(msg.value >= price);
-        require(active[profileNode(_handle)] == false);
-        require(profileOwner(_handle) == address(0));
-        registrar.register(keccak256(_handle), msg.sender);
-        setProfileInfo(profileNode(_handle), "mimo:active", keccak256("true"));
-        emit Profile(_handle, profileNode(_handle), block.timestamp);
+        require(active(profileNode(_subnode)) == false);
+        require(profileOwner(_subnode) == address(0));
+        registrar.register(_subnode, msg.sender);
+        setProfileInfo(profileNode(_subnode), "mimo:active", keccak256("true"));
+        emit Profile(profileNode(_subnode), block.timestamp);
     }
 
-    function setProfileOwner(string _handle, address _owner) public {
-        require(profileOwner(_handle) != address(0));
-        require(msg.sender == profileOwner(_handle));
-        require(active[profileNode(_handle)] == true);
+    function setProfileOwner(bytes32 _subnode, address _owner) public onlyAuthorized(profileNode(_subnode)) onlyActive(profileNode(_subnode)) {
         require(_owner != address(0));
-        require(_owner != profileOwner(_handle));
-        registrar.register(keccak256(_handle), _owner);
+        require(_owner != profileOwner(profileNode(_subnode));
+        registrar.register(_subnode, _owner);
     }
 
     function deactivateProfile(bytes32 _node) public onlyAuthorized(_node) onlyActive(_node) {
@@ -59,6 +47,11 @@ contract Mimo is Ownable {
 
     function reactivateProfile(bytes32 _node) public onlyAuthorized(_node) {
         setProfileInfo(_node, "mimo:active", keccak256("true"));
+    }
+
+    // deleteProfile() also deletes all profile data stored off-chain
+    function deleteProfile(bytes32 _node) public onlyAuthorized(_node) onlyActive(_node) {
+        setProfileInfo(_node, "mimo:active", keccak256("false"));
     }
 
     function setProfileAddress(bytes32 _node, address _addr) public onlyAuthorized(_node) onlyActive(_node) {
@@ -77,13 +70,11 @@ contract Mimo is Ownable {
         resolver.setMultihash(_node, _hash);
     }
 
-    function follow(bytes32 _initiator, bytes32 _target) public onlyAuthorized(_initiator) onlyActive(_initiator) onlyActive(_target) {
-        emit Follow(_initiator, _target, true);
-    }
+    function follow(bytes32 _initiator, bytes32 _target) public onlyAuthorized(_initiator) onlyActive(_initiator) onlyActive(_target) {}
 
-    function unfollow(bytes32 _initiator, bytes32 _target) public onlyAuthorized(_initiator) onlyActive(_initiator) onlyActive(_target) {
-        emit Follow(_initiator, _target, false);
-    }
+    function unfollow(bytes32 _initiator, bytes32 _target) public onlyAuthorized(_initiator) onlyActive(_initiator) onlyActive(_target) {}
+
+    function metadata(bytes32 _node, string _key, string _value) public onlyAuthorized(_node) onlyActive(_node) {}
 
     function active(bytes32 _node) public view returns(bool) {
         return resolver.text(_node, "mimo:active") == keccak256("true");
@@ -105,17 +96,20 @@ contract Mimo is Ownable {
         return resolver.multihash(_node);
     }
 
-    function profileOwner(string _handle) public view returns(address) {
-        require(active[profileNode(_handle)] == true);
-        return registrar.subnodeOwner(keccak256(_handle));
+    function profileOwner(bytes32 _node) public view onlyActive(_node) returns(address) {
+        return registrar.nodeOwner(_node);
     }
 
-    function profileNode(string _handle) public pure returns(bytes32) {
-        return registrar.getNode(keccak256(_handle));
+    function profileNode(bytes32 _subnode) public pure returns(bytes32) {
+        return registrar.getNode(_subnode);
     }
 
     function giveBackOwnership() public onlyOwner {
         resolver.transferOwnership(owner);
+    }
+
+    function withdraw() public onlyOwner {
+        owner.transfer(address(this).balance);
     }
 
 }

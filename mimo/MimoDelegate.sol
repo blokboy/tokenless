@@ -10,6 +10,23 @@ contract MimoDelegate is Ownable {
     // Tracks whether an address can commit actions for your profile on your behalf
     mapping (address => bool) internal delegates;
 
+    // Addresses that can read a profile's info
+    mapping (address => bool) internal readers;
+
+    modifier onlyDelegate() {
+        require(isDelegate(msg.sender));
+        _;
+    }
+
+    modifier onlyReader() {
+        require(isReader(msg.sender));
+        _;
+    }
+
+    function MimoDelegate(bytes32 _node) public {
+        rootNode = _node;
+    }
+
     function addDelegate(address _addr) public onlyOwner {
         delegates[_addr] = true;
     }
@@ -20,6 +37,18 @@ contract MimoDelegate is Ownable {
 
     function isDelegate(address _addr) public view returns(bool) {
         return delegates[_addr];
+    }
+
+    function addReader(address _addr) public onlyOwner {
+        readers[_addr] = true;
+    }
+
+    function removeReader(address _addr) public onlyOwner {
+        delete readers[_addr];
+    }
+
+    function isReader(address _addr) public view returns(bool) {
+        return readers[_addr];
     }
 
     /// OPTIONAL DELEGATE CODE ///
